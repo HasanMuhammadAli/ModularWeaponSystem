@@ -4,6 +4,8 @@
 #include "mws/util/Clamp.h"
 #include "mws/util/Log.h"
 #include "mws/IWeapon.h"
+#include "mws/SoundSystem.h"
+
 
 // Abstraction check: interfaces cannot be instantiated
 // static_assert(std::is_abstract_v<IWeapon>, "IWeapon must be abstract");
@@ -21,6 +23,17 @@ int main() {
 
     std::cout << "\n=== Interfaces ===\n";
     std::cout << "IWeapon is abstract with a virtual destructor (checked at compile time)\n";
+
+    std::cout << "\n=== Singleton ===\n";
+    SoundSystem::Get().Play("startup.wav");
+
+    SoundSystem& a = SoundSystem::Get();
+    SoundSystem& b = SoundSystem::Get();
+    std::cout << "Same instance: " << (&a == &b ? "yes" : "no") << "\n";
+
+    // These would not compile (uncomment to see the errors):
+    // SoundSystem s;               // constructor is private
+    // SoundSystem copy = a;        // copy constructor is deleted
 
     return 0;
 }
