@@ -7,6 +7,10 @@
 #include "mws/SoundSystem.h"
 #include "mws/Magazine.h"
 
+#include "mws/AssaultRifle.h"
+#include "mws/Shotgun.h"
+#include "mws/LaserPistol.h"
+#include <memory>
 
 // Abstraction check: interfaces cannot be instantiated
 // static_assert(std::is_abstract_v<IWeapon>, "IWeapon must be abstract");
@@ -46,6 +50,24 @@ int main() {
         std::cout << "Ammo after += 15: " << mag.GetCurrentAmmo() << "\n";
     }
     std::cout << "Mags alive after scope: " << Magazine::AliveCount() << "\n";
+
+    std::cout << "\n=== Polymorphism & Testing ===\n";
+{
+    // Runtime polymorphism using base class pointers
+    IWeapon* weapons[] = { new AssaultRifle(), new Shotgun() };
+
+    for (int i = 0; i < 2; ++i) {
+        weapons[i]->Shoot();
+        weapons[i]->Shoot();
+        delete weapons[i]; // Clean up raw memory
+    }
+
+    // Quick shotgun test
+    Shotgun sg;
+    sg.Shoot();
+    sg.Reload();
+    std::cout << "Shotgun ammo after reload: " << sg.GetAmmo() << "\n";
+}
 
     return 0;
 }
