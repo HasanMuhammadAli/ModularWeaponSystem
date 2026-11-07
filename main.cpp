@@ -12,6 +12,9 @@
 #include "mws/LaserPistol.h"
 #include <memory>
 
+#include <stdexcept>
+#include "mws/WeaponFactory.h"
+
 // Abstraction check: interfaces cannot be instantiated
 // static_assert(std::is_abstract_v<IWeapon>, "IWeapon must be abstract");
 // static_assert(std::has_virtual_destructor_v<IWeapon>, "IWeapon needs a virtual destructor");
@@ -68,6 +71,29 @@ int main() {
     sg.Reload();
     std::cout << "Shotgun ammo after reload: " << sg.GetAmmo() << "\n";
 }
+    std::cout << "\n=== Factory + polymorphism ===\n";
+    {
+        std::shared_ptr<IWeapon> weapons[] = {
+            WeaponFactory::Create("assault_rifle"),
+            WeaponFactory::Create("shotgun"),
+            WeaponFactory::Create("laser_pistol"),
+        };
+        for (auto& w : weapons) {
+            std::cout << w->GetName() << ":\n";
+            w->Shoot();
+        }
+
+        std::cout << "\nEmptying a shotgun:\n";
+        auto sg = WeaponFactory::Create("shotgun");
+        for (int i = 0; i < 7; ++i) sg->Shoot();   // 6 rounds, 7th clicks
+        sg->Reload();
+        std::cout << "After reload, ammo: " << sg->GetAmmo() << "\n";
+        std::cout << "\nLeaving scope (destructors run):\n";
+    }
+
+    std::cout << "\n=== Factory error handling ===\n";
+    try { WeaponFactory::Create("bazooka"); }
+    catch (const std::invalid_argument& e) { std::cout << "Caught: " << e.what() << "\n"; }
 
     return 0;
 }
