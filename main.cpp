@@ -1,49 +1,39 @@
+// ============================================================================
+//  ModularWeaponSystem demo
+//  OOP concepts + Singleton and Factory patterns
+// ============================================================================
 #include <iostream>
+#include <memory>
+#include <stdexcept>
 #include <type_traits>
 
+#include "mws/BaseWeapon.h"
+#include "mws/IWeapon.h"
+#include "mws/Magazine.h"
+#include "mws/SoundSystem.h"
+#include "mws/WeaponFactory.h"
 #include "mws/util/Clamp.h"
 #include "mws/util/Log.h"
-#include "mws/IWeapon.h"
-#include "mws/SoundSystem.h"
-#include "mws/Magazine.h"
 
-#include "mws/AssaultRifle.h"
-#include "mws/Shotgun.h"
-#include "mws/LaserPistol.h"
-#include <memory>
-
-#include <stdexcept>
-#include "mws/WeaponFactory.h"
-
-// Abstraction check: interfaces cannot be instantiated
-// static_assert(std::is_abstract_v<IWeapon>, "IWeapon must be abstract");
-// static_assert(std::has_virtual_destructor_v<IWeapon>, "IWeapon needs a virtual destructor");
 
 int main() {
-    std::cout << "=== Shooter demo ===\n";
-
-    std::cout << "\n=== Compile-time polymorphism ===\n";
+    std::cout << "=== 1. Compile-time polymorphism ===\n";
     util::Log("Hello");
     util::Log("Health", 100);
     util::Log("Speed", 3.5);
     std::cout << "Clamp<int>:    " << util::Clamp(150, 0, 100)    << "\n";
     std::cout << "Clamp<double>: " << util::Clamp(-2.5, 0.0, 1.0) << "\n";
 
-    std::cout << "\n=== Interfaces ===\n";
-    std::cout << "IWeapon is abstract with a virtual destructor (checked at compile time)\n";
+    std::cout << "\n=== 2. Abstraction ===\n";
+    std::cout << "IWeapon and BaseWeapon are abstract (checked at compile time)\n";
 
-    std::cout << "\n=== Singleton ===\n";
+    std::cout << "\n=== 3. Singleton ===\n";
     SoundSystem::Get().Play("startup.wav");
-
     SoundSystem& a = SoundSystem::Get();
     SoundSystem& b = SoundSystem::Get();
     std::cout << "Same instance: " << (&a == &b ? "yes" : "no") << "\n";
 
-    // These would not compile (uncomment to see the errors):
-    // SoundSystem s;               // constructor is private
-    // SoundSystem copy = a;        // copy constructor is deleted
-
-    std::cout << "\n=== Encapsulation, static, const, operator overloading ===\n";
+    std::cout << "\n=== 4. Encapsulation, static, const, operator overloading ===\n";
     {
         Magazine mag(30);
         std::cout << "Mags alive: " << Magazine::AliveCount() << "\n";
@@ -51,27 +41,12 @@ int main() {
         std::cout << "Ammo after firing 20: " << mag.GetCurrentAmmo() << "\n";
         mag += 15;
         std::cout << "Ammo after += 15: " << mag.GetCurrentAmmo() << "\n";
+        mag += 100;   // clamped to capacity
+        std::cout << "Ammo after += 100 (clamped): " << mag.GetCurrentAmmo() << "\n";
     }
     std::cout << "Mags alive after scope: " << Magazine::AliveCount() << "\n";
 
-    std::cout << "\n=== Polymorphism & Testing ===\n";
-{
-    // Runtime polymorphism using base class pointers
-    IWeapon* weapons[] = { new AssaultRifle(), new Shotgun() };
-
-    for (int i = 0; i < 2; ++i) {
-        weapons[i]->Shoot();
-        weapons[i]->Shoot();
-        delete weapons[i]; // Clean up raw memory
-    }
-
-    // Quick shotgun test
-    Shotgun sg;
-    sg.Shoot();
-    sg.Reload();
-    std::cout << "Shotgun ammo after reload: " << sg.GetAmmo() << "\n";
-}
-    std::cout << "\n=== Factory + polymorphism ===\n";
+    std::cout << "\n=== 5. Factory + runtime polymorphism ===\n";
     {
         std::shared_ptr<IWeapon> weapons[] = {
             WeaponFactory::Create("assault_rifle"),
@@ -80,7 +55,7 @@ int main() {
         };
         for (auto& w : weapons) {
             std::cout << w->GetName() << ":\n";
-            w->Shoot();
+            w->Shoot();   // same call, different behaviour per weapon
         }
 
         std::cout << "\nEmptying a shotgun:\n";
@@ -88,12 +63,30 @@ int main() {
         for (int i = 0; i < 7; ++i) sg->Shoot();   // 6 rounds, 7th clicks
         sg->Reload();
         std::cout << "After reload, ammo: " << sg->GetAmmo() << "\n";
+
         std::cout << "\nLeaving scope (destructors run):\n";
     }
 
-    std::cout << "\n=== Factory error handling ===\n";
-    try { WeaponFactory::Create("bazooka"); }
-    catch (const std::invalid_argument& e) { std::cout << "Caught: " << e.what() << "\n"; }
+    std::cout << "\n=== 6. Shared ownership + virtual destructor ===\n";
+    {
+        auto rifle = WeaponFactory::Create("assault_rifle");
+        auto alias = rifle;   // second owner of the same weapon
+        std::cout << "Owners: " << rifle.use_count() << "\n";
 
+        rifle.reset();        // one owner released, weapon still alive
+        std::cout << "After rifle.reset(), owners: " << alias.use_count() << "\n";
+
+        std::cout << "Releasing the last owner:\n";
+        alias.reset();        // last owner released -> destroyed
+    }
+
+    std::cout << "\n=== 7. Factory error handling ===\n";
+    try {
+        WeaponFactory::Create("bazooka");
+    } catch (const std::invalid_argument& e) {
+        std::cout << "Caught: " << e.what() << "\n";
+    }
+
+    std::cout << "\n=== Program ending ===\n";
     return 0;
 }
