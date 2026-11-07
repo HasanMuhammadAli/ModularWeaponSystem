@@ -10,11 +10,11 @@
 #include "mws/BaseWeapon.h"
 #include "mws/IWeapon.h"
 #include "mws/Magazine.h"
+#include "mws/Player.h"
 #include "mws/SoundSystem.h"
 #include "mws/WeaponFactory.h"
 #include "mws/util/Clamp.h"
 #include "mws/util/Log.h"
-
 
 int main() {
     std::cout << "=== 1. Compile-time polymorphism ===\n";
@@ -57,27 +57,29 @@ int main() {
             std::cout << w->GetName() << ":\n";
             w->Shoot();   // same call, different behaviour per weapon
         }
-
-        std::cout << "\nEmptying a shotgun:\n";
-        auto sg = WeaponFactory::Create("shotgun");
-        for (int i = 0; i < 7; ++i) sg->Shoot();   // 6 rounds, 7th clicks
-        sg->Reload();
-        std::cout << "After reload, ammo: " << sg->GetAmmo() << "\n";
-
         std::cout << "\nLeaving scope (destructors run):\n";
     }
 
-    std::cout << "\n=== 6. Shared ownership + virtual destructor ===\n";
+    std::cout << "\n=== 6. Player: equip, shoot, swap weapon ===\n";
     {
+        Player player("Player1");
+        player.Shoot();                       // nothing equipped yet
+
         auto rifle = WeaponFactory::Create("assault_rifle");
-        auto alias = rifle;   // second owner of the same weapon
-        std::cout << "Owners: " << rifle.use_count() << "\n";
+        player.EquipWeapon(rifle);
+        player.Shoot();
+        player.Shoot();
+        player.Reload();
 
-        rifle.reset();        // one owner released, weapon still alive
-        std::cout << "After rifle.reset(), owners: " << alias.use_count() << "\n";
+        std::cout << "\nSwapping to a shotgun (rifle still has 2 owners):\n";
+        player.EquipWeapon(WeaponFactory::Create("shotgun"));
+        std::cout << "Rifle owners: " << rifle.use_count() << "\n";
+        rifle.reset();                        // last owner released -> destroyed
 
-        std::cout << "Releasing the last owner:\n";
-        alias.reset();        // last owner released -> destroyed
+        std::cout << "\nEmptying the shotgun:\n";
+        for (int i = 0; i < 7; ++i) player.Shoot();   // 6 rounds, 7th clicks
+
+        std::cout << "\nLeaving scope (player and shotgun destroyed):\n";
     }
 
     std::cout << "\n=== 7. Factory error handling ===\n";
