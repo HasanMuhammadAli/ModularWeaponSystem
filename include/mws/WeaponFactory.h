@@ -1,12 +1,12 @@
 #pragma once
 
-#include <memory>
 #include <string>
 
-#include "mws/IWeapon.h"
+// Forward declaration to avoid unnecessary header inclusion
+class IWeapon;
 
 class WeaponFactory {
 public:
     // Throws std::invalid_argument for an unknown type.
-    static std::shared_ptr<IWeapon> Create(const std::string& type);
+    static IWeapon* Create(const std::string& type);
 };

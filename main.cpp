@@ -3,9 +3,7 @@
 //  OOP concepts + Singleton and Factory patterns
 // ============================================================================
 #include <iostream>
-#include <memory>
 #include <stdexcept>
-#include <type_traits>
 
 #include "mws/BaseWeapon.h"
 #include "mws/IWeapon.h"
@@ -48,16 +46,17 @@ int main() {
 
     std::cout << "\n=== 5. Factory + runtime polymorphism ===\n";
     {
-        std::shared_ptr<IWeapon> weapons[] = {
+        IWeapon* weapons[] = {
             WeaponFactory::Create("assault_rifle"),
             WeaponFactory::Create("shotgun"),
             WeaponFactory::Create("laser_pistol"),
         };
-        for (auto& w : weapons) {
+        for (auto w : weapons) {
             std::cout << w->GetName() << ":\n";
             w->Shoot();   // same call, different behaviour per weapon
+            delete w;     // clean up raw memory
         }
-        std::cout << "\nLeaving scope (destructors run):\n";
+        std::cout << "\nLeaving scope (all factory weapons cleaned up):\n";
     }
 
     std::cout << "\n=== 6. Player: equip, shoot, swap weapon ===\n";
@@ -65,21 +64,18 @@ int main() {
         Player player("Player1");
         player.Shoot();                       // nothing equipped yet
 
-        auto rifle = WeaponFactory::Create("assault_rifle");
-        player.EquipWeapon(rifle);
+        player.EquipWeapon(WeaponFactory::Create("assault_rifle"));
         player.Shoot();
         player.Shoot();
         player.Reload();
 
-        std::cout << "\nSwapping to a shotgun (rifle still has 2 owners):\n";
+        std::cout << "\nSwapping to a shotgun (player takes ownership and deletes old weapon):\n";
         player.EquipWeapon(WeaponFactory::Create("shotgun"));
-        std::cout << "Rifle owners: " << rifle.use_count() << "\n";
-        rifle.reset();                        // last owner released -> destroyed
 
         std::cout << "\nEmptying the shotgun:\n";
         for (int i = 0; i < 7; ++i) player.Shoot();   // 6 rounds, 7th clicks
 
-        std::cout << "\nLeaving scope (player and shotgun destroyed):\n";
+        std::cout << "\nLeaving scope (player and equipped shotgun destroyed):\n";
     }
 
     std::cout << "\n=== 7. Factory error handling ===\n";

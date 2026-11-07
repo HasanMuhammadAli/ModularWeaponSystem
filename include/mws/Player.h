@@ -1,19 +1,25 @@
 #pragma once
 
-#include <memory>
 #include <string>
 
-#include "mws/IWeapon.h"
+// Forward declaration to avoid unnecessary header inclusion
+class IWeapon;
 
 class Player {
 private:
     std::string name_;
-    std::shared_ptr<IWeapon> weapon_;   // depends on the abstraction, not a concrete gun
+    IWeapon* weapon_;   // raw pointer instead of shared_ptr
 
 public:
     explicit Player(std::string name);
+    ~Player();
 
-    void EquipWeapon(std::shared_ptr<IWeapon> weapon);
+    void EquipWeapon(IWeapon* weapon);
     void Shoot();
     void Reload();
+
+private:
+    // Declare private and leave undefined to prevent copying
+    Player(const Player&);
+    Player& operator=(const Player&);
 };

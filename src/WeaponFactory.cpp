@@ -6,9 +6,9 @@
 #include "mws/Shotgun.h"
 #include "mws/LaserPistol.h"
 
-std::shared_ptr<IWeapon> WeaponFactory::Create(const std::string& type) {
-    if (type == "assault_rifle") return std::make_shared<AssaultRifle>();
-    if (type == "shotgun")       return std::make_shared<Shotgun>();
-    if (type == "laser_pistol")  return std::make_shared<LaserPistol>();
+IWeapon* WeaponFactory::Create(const std::string& type) {
+    if (type == "assault_rifle") return new AssaultRifle();
+    if (type == "shotgun")       return new Shotgun();
+    if (type == "laser_pistol")  return new LaserPistol();
     throw std::invalid_argument("Unknown weapon: " + type);
 }

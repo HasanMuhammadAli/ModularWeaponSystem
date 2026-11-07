@@ -4,15 +4,25 @@
 #include <utility>
 
 #include "mws/util/Log.h"
+#include "mws/IWeapon.h"
 
-Player::Player(std::string name) : name_(std::move(name)) {}
+Player::Player(std::string name) 
+    : name_(std::move(name)), weapon_(nullptr) {}
 
-void Player::EquipWeapon(std::shared_ptr<IWeapon> weapon) {
+Player::~Player() {
+    delete weapon_;
+}
+
+void Player::EquipWeapon(IWeapon* weapon) {
     if (!weapon) {
         util::Log("Cannot equip a null weapon");
         return;
     }
-    weapon_ = std::move(weapon);   // old weapon released automatically
+    
+    // Delete the previously held weapon to prevent a memory leak
+    delete weapon_;
+    
+    weapon_ = weapon;   
     std::cout << name_ << " equipped " << weapon_->GetName() << "\n";
 }
 
