@@ -5,6 +5,7 @@
 #include "mws/util/Log.h"
 #include "mws/IWeapon.h"
 #include "mws/SoundSystem.h"
+#include "mws/Magazine.h"
 
 
 // Abstraction check: interfaces cannot be instantiated
@@ -34,6 +35,17 @@ int main() {
     // These would not compile (uncomment to see the errors):
     // SoundSystem s;               // constructor is private
     // SoundSystem copy = a;        // copy constructor is deleted
+
+    std::cout << "\n=== Encapsulation, static, const, operator overloading ===\n";
+    {
+        Magazine mag(30);
+        std::cout << "Mags alive: " << Magazine::AliveCount() << "\n";
+        for (int i = 0; i < 20; ++i) mag.TryConsume();
+        std::cout << "Ammo after firing 20: " << mag.GetCurrentAmmo() << "\n";
+        mag += 15;
+        std::cout << "Ammo after += 15: " << mag.GetCurrentAmmo() << "\n";
+    }
+    std::cout << "Mags alive after scope: " << Magazine::AliveCount() << "\n";
 
     return 0;
 }
