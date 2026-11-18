@@ -3,7 +3,7 @@
 
 class SoundSystem {
 public:
-    static SoundSystem& Get();
+    static SoundSystem& Get(); // 1. the only way in
 
     void Play(const std::string& sfx) const;
 
